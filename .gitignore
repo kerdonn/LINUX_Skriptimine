@@ -1,0 +1,6 @@
+# mängu ja skriptide genereeritud failid
+loto/**/player_numbers.txt
+loto/**/lottery_numbers.txt
+loto/**/results.txt
+# sisaldab avatud kujul paroole
+kasutajate_haldus/loodud_kasutajad_paroolidega
