@@ -1,0 +1,59 @@
+#!/bin/bash
+# Ülesanne 5 - paroolide genereerimine ja logimine
+# Kasutus: sudo sh kasutajad_genereeritud_paroolidega uued_kasutajad
+# Igale failis olevale kasutajale genereeritakse pwgen abil 8-märgiline
+# ainult tähtedest koosnev parool. Kasutaja ja parool salvestatakse
+# logifaili loodud_kasutajad_paroolidega kujul kasutaja:parool.
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 failinimi"
+    exit 1
+fi
+
+failinimi="$1"
+logifail="loodud_kasutajad_paroolidega"
+
+if [ ! -f "$failinimi" ]; then
+    echo "Faili $failinimi ei leitud!"
+    exit 1
+fi
+
+# pwgen olemasolu kontroll, puudumisel paigaldamine
+if ! command -v pwgen >/dev/null 2>&1; then
+    echo "pwgen puudub, paigaldan..."
+    apt-get install -y pwgen >/dev/null 2>&1 || { apt-get update >/dev/null 2>&1; apt-get install -y pwgen >/dev/null 2>&1; }
+    if ! command -v pwgen >/dev/null 2>&1; then
+        echo "pwgen paigaldamine ebaõnnestus!"
+        exit 1
+    fi
+fi
+
+# logifail ainult omanikule loetav, kuna sisaldab paroole
+touch "$logifail"
+chmod 600 "$logifail"
+
+while read -r nimi || [ -n "$nimi" ]
+do
+    [ -z "$nimi" ] && continue
+
+    if id "$nimi" >/dev/null 2>&1; then
+        echo "Kasutaja $nimi on juba olemas!"
+        continue
+    fi
+
+    useradd "$nimi" -m -s /bin/bash
+    if [ $? -ne 0 ]; then
+        echo "Probleem kasutaja $nimi lisamisega"
+        continue
+    fi
+
+    # -0 = ilma numbriteta (ainult tähed), 8 = pikkus, 1 = üks parool
+    parool=$(pwgen -0 8 1)
+    echo "$nimi:$parool" | chpasswd
+    if [ $? -eq 0 ]; then
+        echo "$nimi:$parool" >> "$logifail"
+        echo "Kasutaja $nimi lisatud, parool salvestatud faili $logifail"
+    else
+        echo "Kasutajale $nimi parooli lisamine ebaõnnestus"
+    fi
+done < "$failinimi"
