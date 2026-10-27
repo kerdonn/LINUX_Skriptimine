@@ -1,0 +1,27 @@
+#!/bin/bash
+# Ülesanne 2 - kasutajad failist
+# Kasutus: sudo sh kasutajad_failist kasutajad
+# Fail sisaldab igal real ühte kasutajanime. Iga kasutaja lisamiseks
+# kutsutakse skripti lisa_kasutaja.
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 failinimi"
+    exit 1
+fi
+
+failinimi="$1"
+# lisa_kasutaja asub selle skriptiga samas kaustas
+skripti_kaust=$(dirname "$0")
+
+if [ ! -f "$failinimi" ]; then
+    echo "Faili $failinimi ei leitud!"
+    exit 1
+fi
+
+# || [ -n "$nimi" ] loeb ka viimase rea, kui faili lõpus pole reavahetust
+while read -r nimi || [ -n "$nimi" ]
+do
+    # tühjad read jäetakse vahele
+    [ -z "$nimi" ] && continue
+    sh "$skripti_kaust/lisa_kasutaja" "$nimi"
+done < "$failinimi"
