@@ -1,0 +1,59 @@
+#!/bin/bash
+# Ülesanne 4 - kasutajad ja paroolid on eraldi failides
+# Kasutus: sudo sh kasutajad_ja_paroolid kasutajad_nimed paroolid
+# Esimese faili N. rida (kasutaja) vastab teise faili N. reale (parool).
+# Kogu loogika on selles skriptis - teisi skripte ei kutsuta.
+
+if [ $# -ne 2 ]; then
+    echo "Kasutus: $0 kasutajate_fail paroolide_fail"
+    exit 1
+fi
+
+kasutajate_fail="$1"
+paroolide_fail="$2"
+
+for fail in "$kasutajate_fail" "$paroolide_fail"
+do
+    if [ ! -f "$fail" ]; then
+        echo "Faili $fail ei leitud!"
+        exit 1
+    fi
+done
+
+# Kontroll: ridade arv peab mõlemas failis klappima
+# (grep -c '' loeb ka viimase rea, millel pole reavahetust)
+k_arv=$(grep -c '' "$kasutajate_fail")
+p_arv=$(grep -c '' "$paroolide_fail")
+if [ "$k_arv" -ne "$p_arv" ]; then
+    echo "Viga: kasutajaid on $k_arv, paroole $p_arv - arv peab klappima!"
+    exit 1
+fi
+
+# paste ühendab failid ridade kaupa kujule kasutaja:parool
+paste -d: "$kasutajate_fail" "$paroolide_fail" | while IFS=: read -r nimi parool
+do
+    [ -z "$nimi" ] && continue
+
+    if id "$nimi" >/dev/null 2>&1; then
+        echo "Kasutaja $nimi on juba olemas!"
+        continue
+    fi
+
+    # kasutaja loomine koos kodukataloogiga (/etc/skel peidetud failid)
+    useradd "$nimi" -m -s /bin/bash
+    if [ $? -ne 0 ]; then
+        echo "Probleem kasutaja $nimi lisamisega"
+        continue
+    fi
+    echo "Kasutaja nimega $nimi on lisatud süsteemi"
+
+    # parooli määramine
+    echo "$nimi:$parool" | chpasswd
+    if [ $? -eq 0 ]; then
+        echo "Kasutajale $nimi on parool lisatud"
+    else
+        echo "Kasutajale $nimi parooli lisamine ebaõnnestus"
+    fi
+    grep "^$nimi:" /etc/passwd
+    grep "^$nimi:" /etc/shadow
+done
