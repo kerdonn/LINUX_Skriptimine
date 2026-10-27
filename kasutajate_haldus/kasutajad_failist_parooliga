@@ -1,0 +1,35 @@
+#!/bin/bash
+# Ülesanne 3 - kasutajad paroolidega failist
+# Kasutus: sudo sh kasutajad_failist_parooliga kasutajad_paroolid
+# Faili iga rida on kujul kasutajanimi:parool (parool avatud kujul).
+# Kasutaja luuakse skriptiga lisa_kasutaja ja parool lisatakse chpasswd abil
+# (chpasswd krüpteerib parooli ja kirjutab räsi /etc/shadow faili).
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 failinimi"
+    exit 1
+fi
+
+failinimi="$1"
+skripti_kaust=$(dirname "$0")
+
+if [ ! -f "$failinimi" ]; then
+    echo "Faili $failinimi ei leitud!"
+    exit 1
+fi
+
+while IFS=: read -r nimi parool || [ -n "$nimi" ]
+do
+    [ -z "$nimi" ] && continue
+    sh "$skripti_kaust/lisa_kasutaja" "$nimi"
+    if [ $? -eq 0 ]; then
+        # parooli lisamine shadow faili
+        echo "$nimi:$parool" | chpasswd
+        if [ $? -eq 0 ]; then
+            echo "Kasutajale $nimi on parool lisatud"
+            grep "^$nimi:" /etc/shadow
+        else
+            echo "Kasutajale $nimi parooli lisamine ebaõnnestus"
+        fi
+    fi
+done < "$failinimi"

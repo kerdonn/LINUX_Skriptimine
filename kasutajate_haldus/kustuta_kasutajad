@@ -1,0 +1,20 @@
+#!/bin/bash
+# Abiskript: kustutab failis olevad kasutajad koos kodukataloogiga
+# Kasutus: sudo sh kustuta_kasutajad kasutajad
+# Sobib nii kasutajanimi kui ka kasutajanimi:parool kujul failidele.
+
+if [ $# -ne 1 ] || [ ! -f "$1" ]; then
+    echo "Kasutus: $0 failinimi"
+    exit 1
+fi
+
+while IFS=: read -r nimi muu || [ -n "$nimi" ]
+do
+    [ -z "$nimi" ] && continue
+    if id "$nimi" >/dev/null 2>&1; then
+        userdel -r "$nimi" 2>/dev/null
+        echo "Kasutaja $nimi kustutatud"
+    else
+        echo "Kasutajat $nimi ei ole olemas"
+    fi
+done < "$1"
