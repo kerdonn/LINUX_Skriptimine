@@ -1,0 +1,36 @@
+#!/bin/bash
+# Ülesanne 1 - kasutaja loomine käsurea parameetri abil
+# Kasutus: sudo sh lisa_kasutaja kasutajanimi
+# Loob kasutaja ILMA paroolita, kodukataloogiga /home/kasutajanimi.
+# useradd -m kopeerib kodukataloogi ka /etc/skel peidetud failid
+# (.bashrc, .profile, .bash_logout).
+
+# Kontroll: parameeter peab olema antud
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 kasutajanimi"
+    exit 1
+fi
+
+kasutajanimi="$1"
+
+# Kontroll: kasutaja võib juba olemas olla
+if id "$kasutajanimi" >/dev/null 2>&1; then
+    echo "Kasutaja $kasutajanimi on juba olemas!"
+    exit 2
+fi
+
+# Kasutaja loomine: -m loob kodukataloogi, -s määrab kesta
+useradd "$kasutajanimi" -m -s /bin/bash
+tulemus=$?
+
+# Tulemuse kontroll useradd väljumiskoodi järgi
+if [ $tulemus -eq 0 ]; then
+    echo "Kasutaja nimega $kasutajanimi on lisatud süsteemi"
+    grep "^$kasutajanimi:" /etc/passwd
+    grep "^$kasutajanimi:" /etc/shadow
+    ls -la "/home/$kasutajanimi"
+else
+    echo "Probleem kasutaja $kasutajanimi lisamisega"
+    echo "Probleemi kood: $tulemus"
+fi
+exit $tulemus
