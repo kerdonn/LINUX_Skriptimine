@@ -87,7 +87,7 @@ compress_cmd() {
     case "$1" in
         zstd) echo "zstd -19 -T0" ;;
         gzip) echo "gzip -9" ;;
-        xz)   echo "xz -9 -T0" ;;
+        xz)   echo "xz -9" ;;   # ühe lõimega, et mälu piisaks
     esac
 }
 decompress_cmd() {
